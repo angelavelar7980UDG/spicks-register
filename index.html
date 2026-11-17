@@ -645,6 +645,23 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 .impact.warnrow span, .impact.warnrow b { color: var(--warn-text); }
 .toast button.alt { background: color-mix(in srgb, var(--page) 18%, transparent); color: var(--page); }
 
+/* ---- Depósitos ---- */
+.dep { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--hair); }
+.dep h3 { font: 700 1.05rem/1.2 var(--font-display); letter-spacing: -0.01em; }
+.dep-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.dep-form .money-in { grid-column: 1 / -1; }
+.dep-form .input { min-width: 0; }
+.dep-pool { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--tint-pos); font-size: 0.85rem; }
+.dep-pool b { color: var(--pos-text); font-variant-numeric: tabular-nums; }
+.dep-list { display: grid; }
+.dep-list li { display: flex; align-items: center; gap: 10px; min-height: 46px; border-bottom: 1px solid var(--hair); }
+.dep-list li:last-child { border-bottom: 0; }
+.dep-list .dd { flex: 1; color: var(--ink-2); font-size: 0.9rem; }
+.dep-list b { color: var(--pos-text); font-variant-numeric: tabular-nums; }
+.dep-list .dep-empty { color: var(--ink-3); font-size: 0.85rem; border: 0; }
+.icon-btn.sm { width: 34px; height: 34px; }
+.icon-btn.sm .i { width: 16px; height: 16px; }
+
 /* Accesibilidad: movimiento y transparencia reducidos */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -734,7 +751,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
           <div class="hero-value" id="heroValue">$0.00</div>
           <div class="delta" id="heroDelta"></div>
         </div>
-        <button class="cap-pill" id="btnCapital" aria-label="Editar capital inicial"><span>Capital inicial</span><b id="capVal">$0.00</b><svg class="i" style="width:15px;height:15px"><use href="#i-pencil"/></svg></button>
+        <button class="cap-pill" id="btnCapital" aria-label="Editar capital y depósitos"><span id="capLbl">Capital inicial</span><b id="capVal">$0.00</b><svg class="i" style="width:15px;height:15px"><use href="#i-pencil"/></svg></button>
       </div>
       <div class="hero-stats">
         <div class="hs"><small>Disponible</small><b id="hsAvail">$0.00</b><small>Bankroll menos lo que está en juego</small></div>
@@ -993,17 +1010,31 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
     <div class="sheet-top" data-drag>
       <div class="grip"></div>
       <div class="sheet-head">
-        <h2 id="cap-title">Capital inicial</h2>
+        <h2 id="cap-title">Capital y depósitos</h2>
         <button type="button" class="icon-btn" data-close aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
       </div>
     </div>
     <div class="sheet-body">
-      <p class="sheet-copy">Es el dinero con el que empezaste. Tu <b>bankroll actual</b> se calcula sumando o restando tus ganancias y pérdidas a esta cantidad.</p>
+      <p class="sheet-copy">Tu <b>bankroll actual</b> es tu capital inicial, más tus depósitos, más o menos tus ganancias y pérdidas.</p>
       <div class="field big-input">
-        <label class="lbl" for="f-cap">Cantidad en pesos</label>
+        <label class="lbl" for="f-cap">Capital inicial · con lo que empezaste</label>
         <div class="money-in" id="w-cap"><span>$</span><input id="f-cap" inputmode="decimal" placeholder="0.00"><em>MXN</em></div>
         <p class="hint err" id="e-cap" hidden></p>
       </div>
+
+      <section class="dep" aria-labelledby="dep-title">
+        <h3 id="dep-title">Depósitos</h3>
+        <p class="hint">Dinero nuevo que metes a tu cuenta para apostar. Sube tu bankroll pero <b>no toca tus ganancias</b>: lo que ya ganaste sigue disponible para reinvertir.</p>
+        <div class="dep-form">
+          <div class="money-in" id="w-dep"><span>$</span><input id="f-dep" inputmode="decimal" placeholder="Monto a depositar"><em>MXN</em></div>
+          <input class="input" id="f-dep-date" type="date" aria-label="Fecha del depósito">
+          <button type="button" class="btn primary" id="btnAddDep">Depositar</button>
+        </div>
+        <p class="hint err" id="e-dep" hidden></p>
+        <div class="dep-pool"><span>Tus ganancias disponibles, sin tocar</span><b id="depPool">$0.00</b></div>
+        <ul class="dep-list" id="depList"></ul>
+        <p class="hint" id="depTotal" hidden></p>
+      </section>
     </div>
     <div class="sheet-foot"><button type="submit" class="btn primary">Guardar capital</button></div>
   </form>
@@ -1125,14 +1156,14 @@ const PAGE = 30;
 /* ==========================================================================
    Estado y persistencia
    ========================================================================== */
-let state = { bets: [], capital: 0, demo: false, chartMode: 'bankroll', range: 'all', theme: null, lastCategory: 'Fútbol' };
+let state = { bets: [], capital: 0, deposits: [], demo: false, chartMode: 'bankroll', range: 'all', theme: null, lastCategory: 'Fútbol' };
 const ui = { status: 'ALL', sport: 'ALL', q: '', sort: 'new', limit: PAGE, flashId: null };
 let memoryStore = null;
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { state = { ...state, ...JSON.parse(raw) }; return; }
+    if (raw) { state = { ...state, ...JSON.parse(raw) }; state.deposits = (Array.isArray(state.deposits) ? state.deposits : []).map(cleanDeposit).filter(Boolean); return; }
   } catch (e) { /* almacenamiento bloqueado: se trabaja en memoria */ }
   state.bets = demoBets(); state.capital = 10000; state.demo = true;
   save();
@@ -1183,6 +1214,14 @@ function profitOf(b) {
 const potentialProfit = b => (b.payout > 0 ? round2(b.payout - b.stake) : round2(b.stake * (b.odds - 1)));
 /* La cuota se muestra con 2 decimales, y con más solo si se capturó con más precisión */
 const fmtOdds = o => { const t = (Math.round(o * 10000) / 10000).toFixed(4).replace(/0+$/, ''); const [i, d = ''] = t.split('.'); return i + '.' + d.padEnd(2, '0'); };
+/* Depósitos: dinero nuevo tuyo que sube el bankroll sin ser ganancia */
+const depositsTotal = () => round2(state.deposits.reduce((a, d) => a + d.amount, 0));
+const contributed = () => round2(state.capital + depositsTotal());
+const cleanDeposit = (d, i = 0) => {
+  const a = Number(d && d.amount);
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(String(d.date)) || !(a > 0)) return null;
+  return { id: String(d.id || 'dep-' + i + '-' + Date.now()), date: d.date, amount: round2(a), createdAt: Number(d.createdAt) || Date.now() + i };
+};
 const isSettled = b => b.status !== 'Pendiente';
 const isWin = b => b.status === 'Ganada' || (b.status === 'Cashout' && profitOf(b) > 0);
 const isLoss = b => b.status === 'Perdida' || (b.status === 'Cashout' && profitOf(b) < 0);
@@ -1389,8 +1428,10 @@ function toast(msg, { undo = null, kind = null, ms = 5200 } = {}) {
   t.addEventListener('pointerenter', () => clearTimeout(timer)); t.addEventListener('pointerleave', arm); arm();
 }
 function withUndo(msg, fn, { kind = 'ok' } = {}) {
-  const snap = JSON.stringify({ bets: state.bets, capital: state.capital, demo: state.demo });
+  const snap = JSON.stringify({ bets: state.bets, capital: state.capital, deposits: state.deposits, demo: state.demo });
   fn(); save(); renderAll();
+  // Solo se puede deshacer la última acción: deshacer una anterior borraría en silencio lo que vino después
+  $$('#toasts .toast').forEach(el => { if (el.querySelector('button')) el.remove(); });
   toast(msg, { kind, undo: () => { Object.assign(state, JSON.parse(snap)); save(); renderAll(); toast('Cambio deshecho'); } });
 }
 
@@ -1430,7 +1471,7 @@ let segRange, segChart, segType, segPay;
 let introDone = false;
 
 function renderAll(animate = false) {
-  renderHero(); renderKPIs(); renderChart(animate); renderSports(); renderHistory();
+  renderHero(); renderKPIs(); renderChart(animate); renderSports(); renderHistory(); renderDeposits();
   $('#demoBanner').hidden = !state.demo;
   segRange.set(state.range, false); segChart.set(state.chartMode, false);
   $('#chartTitle').textContent = state.chartMode === 'bankroll' ? 'Evolución del bankroll' : 'Ganancia acumulada';
@@ -1446,17 +1487,18 @@ function setSigned(el, value, fmt, { zeroIcon = false } = {}) {
 
 function renderHero() {
   const all = stats(state.bets);
-  const bankroll = round2(state.capital + all.net);
+  const contrib = contributed(), hasDep = state.deposits.length > 0;
+  const bankroll = round2(contrib + all.net);
   const avail = round2(bankroll - all.pendStake);
   const pool = winningsPool();
   countTo($('#heroValue'), bankroll, v => money(v));
   const d = $('#heroDelta');
-  const growth = state.capital > 0 ? all.net / state.capital * 100 : null;
+  const growth = contrib > 0 ? all.net / contrib * 100 : null;
   d.className = 'delta ' + sgn(all.net);
   d.innerHTML = (all.net !== 0 ? icon(triFor(all.net), 'fill tri') : '') +
     `<span>${money(all.net, { sign: true })}${growth !== null ? ' · ' + pct(growth, { sign: true }) : ''}</span>` +
-    `<small>${state.capital > 0 ? 'desde tu capital inicial' : 'de resultado neto'}</small>`;
-  $('#capVal').textContent = money(state.capital);
+    `<small>${contrib > 0 ? (hasDep ? 'sobre tu capital aportado' : 'desde tu capital inicial') : 'de resultado neto'}</small>`;
+  $('#capVal').textContent = money(contrib); $('#capLbl').textContent = hasDep ? 'Capital aportado' : 'Capital inicial';
   $('#hsAvail').textContent = money(avail);
   $('#hsPend').textContent = money(all.pendStake);
   $('#hsPendN').textContent = `${all.pendN} ${all.pendN === 1 ? 'apuesta pendiente' : 'apuestas pendientes'}`;
@@ -1521,16 +1563,22 @@ function niceTicks(min, max, count = 4) {
 }
 function chartPoints() {
   const mode = state.chartMode, start = rangeStart();
-  const all = state.bets.filter(isSettled).sort(byDate);
-  let running = 0, before = 0; const inR = [];
-  for (const b of all) {
-    running = round2(running + profitOf(b));
-    if (!start || b.date >= start) inR.push({ bet: b, cum: running }); else before = running;
+  const ev = [];
+  for (const b of state.bets) if (isSettled(b)) ev.push({ date: b.date, t: b.createdAt || 0, bet: b });
+  if (mode === 'bankroll') for (const d of state.deposits) ev.push({ date: d.date, t: d.createdAt || 0, dep: d });
+  ev.sort((x, y) => (x.date === y.date ? x.t - y.t : (x.date < y.date ? -1 : 1)));
+  let cum = 0, contrib = state.capital, beforeCum = 0, beforeContrib = state.capital; const inR = [];
+  for (const e of ev) {
+    if (e.bet) cum = round2(cum + profitOf(e.bet)); else contrib = round2(contrib + e.dep.amount);
+    if (!start || e.date >= start) inR.push({ e, cum, contrib }); else { beforeCum = cum; beforeContrib = contrib; }
   }
-  const off = mode === 'bankroll' ? state.capital : 0;
-  const base = mode === 'bankroll' ? 0 : before;
-  const pts = [{ label: 'Inicio', value: round2(off + (mode === 'bankroll' ? before : 0)), bet: null }];
-  for (const p of inR) pts.push({ label: fmtShort(p.bet.date), value: round2(off + p.cum - (mode === 'bankroll' ? 0 : base)), bet: p.bet });
+  if (mode === 'bankroll') {
+    const pts = [{ label: 'Inicio', value: round2(beforeContrib + beforeCum), contrib: beforeContrib, bet: null, dep: null }];
+    for (const p of inR) pts.push({ label: fmtShort(p.e.date), value: round2(p.contrib + p.cum), contrib: p.contrib, bet: p.e.bet || null, dep: p.e.dep || null });
+    return pts;
+  }
+  const pts = [{ label: 'Inicio', value: 0, contrib: 0, bet: null, dep: null }];
+  for (const p of inR) pts.push({ label: fmtShort(p.e.date), value: round2(p.cum - beforeCum), contrib: 0, bet: p.e.bet, dep: null });
   return pts;
 }
 function renderChart(animate = false) {
@@ -1541,8 +1589,7 @@ function renderChart(animate = false) {
     foot.innerHTML = ''; chart.geo = null; return;
   }
   const W = Math.max(280, box.clientWidth || 600), H = Math.max(220, box.clientHeight || 290);
-  const base = state.chartMode === 'bankroll' ? state.capital : 0;
-  const vals = pts.map(p => p.value).concat(base);
+  const vals = pts.map(p => p.value).concat(pts.map(p => p.contrib));
   const ticks = niceTicks(Math.min(...vals), Math.max(...vals), 4);
   const lo = ticks[0], hi = ticks[ticks.length - 1];
   const labW = Math.max(...ticks.map(t => axisMoney(t).length)) * 6.4 + 14;
@@ -1555,12 +1602,15 @@ function renderChart(animate = false) {
   const xt = []; const nt = Math.min(5, n); for (let k = 0; k < nt; k++) xt.push(Math.round(k * (n - 1) / Math.max(1, nt - 1)));
   const uniq = [...new Set(xt)];
   const showDots = n <= 36;
-  const by = Y(base);
   const last = pts[n - 1];
-  let h = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${state.chartMode === 'bankroll' ? 'Evolución del bankroll' : 'Ganancia acumulada'}: de ${money(pts[0].value)} a ${money(last.value)} en ${n - 1} apuestas">`;
+  let h = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${state.chartMode === 'bankroll' ? 'Evolución del bankroll' : 'Ganancia acumulada'}: de ${money(pts[0].value)} a ${money(last.value)} en ${n - 1} movimientos">`;
   h += `<defs><linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--series)" stop-opacity=".18"/><stop offset="1" stop-color="var(--series)" stop-opacity="0"/></linearGradient></defs>`;
   ticks.forEach(t => { h += `<line class="c-grid" x1="${m.l}" x2="${W - m.r}" y1="${Y(t).toFixed(1)}" y2="${Y(t).toFixed(1)}"/><text class="c-tick" x="${m.l - 8}" y="${(Y(t) + 4).toFixed(1)}" text-anchor="end">${axisMoney(t)}</text>`; });
-  if (base >= lo && base <= hi && (state.chartMode === 'profit' || base !== 0)) h += `<line class="c-base" x1="${m.l}" x2="${W - m.r}" y1="${by.toFixed(1)}" y2="${by.toFixed(1)}"/>`;
+  if (state.chartMode === 'profit' || pts.some(p => p.contrib !== 0)) {
+    let bp = `M${X(0).toFixed(1)} ${Y(pts[0].contrib).toFixed(1)}`;
+    for (let i = 1; i < n; i++) bp += ` H${X(i).toFixed(1)} V${Y(pts[i].contrib).toFixed(1)}`;
+    h += `<path class="c-base" d="${bp}" fill="none"/>`;
+  }
   uniq.forEach((i, k) => { const anchor = k === 0 ? 'start' : (k === uniq.length - 1 ? 'end' : 'middle'); h += `<text class="c-tick" x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="${anchor}">${esc(pts[i].label)}</text>`; });
   const go = animate ? '' : ' go';
   h += `<path class="c-area${go}" d="${area}" fill="url(#gA)"/>`;
@@ -1574,7 +1624,7 @@ function renderChart(animate = false) {
   if (animate) requestAnimationFrame(() => requestAnimationFrame(() => { $('.c-line', box)?.classList.add('go'); $('.c-area', box)?.classList.add('go'); }));
   const delta = last.value - pts[0].value;
   foot.innerHTML = state.chartMode === 'bankroll'
-    ? `<span>Capital inicial <b>${money(state.capital)}</b></span><span>Ahora <b>${money(last.value)}</b></span>`
+    ? `<span>${state.deposits.length ? 'Capital aportado' : 'Capital inicial'} <b>${money(last.contrib)}</b></span><span>Ahora <b>${money(last.value)}</b></span>`
     : `<span>Resultado del periodo</span><span><b class="${sgn(delta)}">${money(last.value, { sign: true })}</b></span>`;
 }
 function showPoint(i, announce = false) {
@@ -1587,7 +1637,13 @@ function showPoint(i, announce = false) {
   const tip = $('#tip'); tip.replaceChildren();
   const mk = (cls, txt, tag = 'div') => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = txt; return e; };
   const modeName = state.chartMode === 'bankroll' ? 'Bankroll' : 'Acumulado';
-  if (p.bet) {
+  if (p.dep) {
+    tip.append(mk('t-date', fmtLong(p.dep.date)), mk('t-event', 'Depósito'));
+    const r1 = mk('t-row', ''); r1.append(mk('key', '', 'i'), mk('', money(p.value), 'b'), mk('', modeName, 'span'));
+    const r2 = mk('t-row', ''); const bb = mk('', '+' + money(p.dep.amount), 'b'); bb.className = 'pos';
+    r2.append(bb, mk('', 'dinero tuyo, no es ganancia', 'span'));
+    tip.append(r1, r2);
+  } else if (p.bet) {
     const b = p.bet, pr = profitOf(b);
     tip.append(mk('t-date', `${fmtLong(b.date)} · ${catLabel(b.category)}`), mk('t-event', b.event));
     const r1 = mk('t-row', ''); r1.append(mk('key', '', 'i'), mk('', money(p.value), 'b'), mk('', modeName, 'span'));
@@ -1602,7 +1658,7 @@ function showPoint(i, announce = false) {
   const tw = 224, th = tip.offsetHeight || 96;
   let left = x + 14; if (left + tw > g.W) left = x - tw - 14; left = Math.max(0, left);
   tip.style.left = left + 'px'; tip.style.top = clamp(y - th / 2, 0, g.H - th - 24) + 'px'; tip.classList.add('show');
-  if (announce) $('#chartLive').textContent = `${p.label}: ${money(p.value)}${p.bet ? `. ${p.bet.event}, ${p.bet.status}, ${money(profitOf(p.bet), { sign: true })}` : ''}`;
+  if (announce) $('#chartLive').textContent = `${p.label}: ${money(p.value)}${p.bet ? `. ${p.bet.event}, ${p.bet.status}, ${money(profitOf(p.bet), { sign: true })}` : (p.dep ? `. Depósito de ${money(p.dep.amount)}` : '')}`;
 }
 function hidePoint() { const cx = $('#cx'); if (cx) cx.style.display = 'none'; $('#tip')?.classList.remove('show'); chart.idx = -1; }
 function initChartEvents() {
@@ -1766,7 +1822,7 @@ function formVals() {
   return { odds: parseOdds($('#f-odds').value), stake: parseMoney($('#f-stake').value), cash: parseMoney($('#f-cash').value) };
 }
 function updateQuick() {
-  const pool = winningsPool(editId), br = Math.max(0, state.capital + stats(state.bets).net);
+  const pool = winningsPool(editId), br = Math.max(0, contributed() + stats(state.bets).net);
   const chips = [100, 200, 500, 1000].map(v => `<button type="button" class="chip" data-amt="${v}">${nfMXN0.format(v)}</button>`);
   if (br > 0) [1, 2, 5].forEach(p => chips.push(`<button type="button" class="chip" data-amt="${round2(br * p / 100)}" title="${p}% de tu bankroll">${p}% del bankroll</button>`));
   $('#quick').innerHTML = chips.join('');
@@ -1911,7 +1967,7 @@ function exportCSV() {
   toast('CSV descargado', { kind: 'ok', ms: 2600 });
 }
 function exportBackup() {
-  download(`spicks-register-respaldo-${todayStr()}.json`, 'application/json', JSON.stringify({ app: 'spicks-register', v: 1, capital: state.capital, bets: state.bets }, null, 2));
+  download(`spicks-register-respaldo-${todayStr()}.json`, 'application/json', JSON.stringify({ app: 'spicks-register', v: 1, capital: state.capital, deposits: state.deposits, bets: state.bets }, null, 2));
   toast('Respaldo guardado', { kind: 'ok', ms: 2600 });
 }
 function importBackup(file) {
@@ -1925,8 +1981,9 @@ function importBackup(file) {
         if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b.date) || !(odds > 1) || !(stake > 0) || !STATUS[b.status]) { dropped++; return null; }
         return { id: String(b.id || 'imp-' + i + '-' + Date.now()), date: b.date, event: String(b.event || 'Sin descripción').slice(0, 140), category: CATS[b.category] ? b.category : 'Otro', type: TYPES.includes(b.type) ? b.type : 'Simple', odds, stake, status: b.status, cashout: Number(b.cashout ?? b.cashoutAmount) || 0, reinvest: !!b.reinvest, payout: Number(b.payout) > 0 ? Number(b.payout) : 0, createdAt: Number(b.createdAt) || Date.now() + i };
       }).filter(Boolean);
-      ask({ title: 'Restaurar respaldo', text: `Se reemplazará tu registro actual por ${bets.length} apuestas del respaldo${dropped ? ` (${dropped} inválidas se omitieron)` : ''}. Podrás deshacerlo desde el aviso.`, ok: 'Restaurar', danger: false })
-        .then(yes => { if (yes) withUndo('Respaldo restaurado', () => { state.bets = bets; state.capital = Number(d.capital) || 0; state.demo = false; }); });
+      const deps = (Array.isArray(d.deposits) ? d.deposits : []).map((x, i) => cleanDeposit(x, i)).filter(Boolean);
+      ask({ title: 'Restaurar respaldo', text: `Se reemplazará tu registro actual por ${bets.length} apuestas${deps.length ? ` y ${deps.length} ${deps.length === 1 ? 'depósito' : 'depósitos'}` : ''} del respaldo${dropped ? ` (${dropped} inválidas se omitieron)` : ''}. Podrás deshacerlo desde el aviso.`, ok: 'Restaurar', danger: false })
+        .then(yes => { if (yes) withUndo('Respaldo restaurado', () => { state.bets = bets; state.deposits = deps; state.capital = Number(d.capital) || 0; state.demo = false; }); });
     } catch (err) { toast('Ese archivo no es un respaldo válido', { kind: 'bad' }); }
   };
   r.readAsText(file);
@@ -1946,8 +2003,8 @@ function runAct(act) {
   if (act === 'csv') exportCSV();
   else if (act === 'backup') exportBackup();
   else if (act === 'restore') $('#fileIn').click();
-  else if (act === 'demo') ask({ title: 'Cargar datos de ejemplo', text: 'Se reemplazará tu registro actual por datos ficticios. Podrás deshacerlo desde el aviso.', ok: 'Cargar ejemplo', danger: false }).then(y => { if (y) withUndo('Datos de ejemplo cargados', () => { state.bets = demoBets(); state.capital = 10000; state.demo = true; }); });
-  else if (act === 'clear') ask({ title: 'Vaciar todo el registro', text: 'Se borrarán todas tus apuestas y tu capital inicial. Te recomendamos guardar un respaldo antes. Podrás deshacerlo desde el aviso.', ok: 'Vaciar todo' }).then(y => { if (y) withUndo('Registro vaciado', () => { state.bets = []; state.capital = 0; state.demo = false; }); });
+  else if (act === 'demo') ask({ title: 'Cargar datos de ejemplo', text: 'Se reemplazará tu registro actual por datos ficticios. Podrás deshacerlo desde el aviso.', ok: 'Cargar ejemplo', danger: false }).then(y => { if (y) withUndo('Datos de ejemplo cargados', () => { state.bets = demoBets(); state.deposits = []; state.capital = 10000; state.demo = true; }); });
+  else if (act === 'clear') ask({ title: 'Vaciar todo el registro', text: 'Se borrarán todas tus apuestas, tus depósitos y tu capital inicial. Te recomendamos guardar un respaldo antes. Podrás deshacerlo desde el aviso.', ok: 'Vaciar todo' }).then(y => { if (y) withUndo('Registro vaciado', () => { state.bets = []; state.deposits = []; state.capital = 0; state.demo = false; }); });
 }
 
 /* ==========================================================================
@@ -1989,7 +2046,7 @@ function bind() {
   // Hero
   $('#btnCapital').addEventListener('click', openCapital);
   $('#btnReinvest').addEventListener('click', () => openBet(null, { reinvest: true }));
-  $('#btnStartClean').addEventListener('click', () => { withUndo('Registro vacío', () => { state.bets = []; state.demo = false; }); setTimeout(openCapital, 350); });
+  $('#btnStartClean').addEventListener('click', () => { withUndo('Registro vacío', () => { state.bets = []; state.deposits = []; state.demo = false; }); setTimeout(openCapital, 350); });
 
   // Filtros
   $('#statusChips').addEventListener('click', e => { const b = e.target.closest('[data-status]'); if (!b) return; ui.status = b.dataset.status; ui.limit = PAGE; renderHistory(); });
@@ -2042,6 +2099,22 @@ function bind() {
     if (!isFinite(v) || v < 0) { $('#e-cap').hidden = false; $('#e-cap').textContent = 'Escribe un monto válido (0 o más).'; $('#w-cap').setAttribute('aria-invalid', 'true'); return; }
     state.capital = round2(v); save(); S.cap.close(); renderAll(); toast('Capital inicial actualizado', { kind: 'ok', ms: 2600 });
   });
+  // Depósitos
+  const addDeposit = () => {
+    const v = parseMoney($('#f-dep').value), date = $('#f-dep-date').value || todayStr(), err = $('#e-dep'), w = $('#w-dep');
+    if (!isFinite(v) || v <= 0) { err.hidden = false; err.textContent = 'Escribe cuánto depositaste (más de $0).'; w.setAttribute('aria-invalid', 'true'); $('#f-dep').focus(); return; }
+    err.hidden = true; w.setAttribute('aria-invalid', 'false');
+    const amount = round2(v);
+    withUndo(`Depósito de ${money(amount)} registrado`, () => { state.deposits.push({ id: 'd-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), date, amount, createdAt: Date.now() }); });
+    $('#f-dep').value = '';
+  };
+  $('#btnAddDep').addEventListener('click', addDeposit);
+  ['#f-dep', '#f-dep-date'].forEach(sel => $(sel).addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addDeposit(); } }));
+  $('#f-dep').addEventListener('input', () => { $('#e-dep').hidden = true; $('#w-dep').setAttribute('aria-invalid', 'false'); });
+  $('#depList').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (!b) return; const id = b.dataset.del;
+    withUndo('Depósito eliminado', () => { state.deposits = state.deposits.filter(d => d.id !== id); });
+  });
   // Cashout rápido
   $('#cashForm').addEventListener('submit', e => {
     e.preventDefault(); const v = parseMoney($('#f-qcash').value);
@@ -2049,8 +2122,19 @@ function bind() {
     const id = cashId; S.cash.close(); setTimeout(() => resolve(id, 'Cashout', round2(v)), 120);
   });
 }
+function renderDeposits() {
+  const list = state.deposits.slice().sort((x, y) => (x.date === y.date ? (y.createdAt || 0) - (x.createdAt || 0) : (x.date < y.date ? 1 : -1)));
+  const shown = list.slice(0, 8);
+  $('#depList').innerHTML = shown.length
+    ? shown.map(d => `<li><span class="dd">${fmtShort(d.date)}</span><b>+${money(d.amount)}</b><button type="button" class="icon-btn sm" data-del="${esc(d.id)}" aria-label="Eliminar el depósito de ${money(d.amount)}">${icon('trash')}</button></li>`).join('')
+    : '<li class="dep-empty">Aún no registras depósitos.</li>';
+  const t = $('#depTotal'); t.hidden = !list.length;
+  t.innerHTML = list.length ? `Total depositado <b>${money(depositsTotal())}</b>${list.length > shown.length ? ` · se muestran los ${shown.length} más recientes de ${list.length}` : ''}` : '';
+  $('#depPool').textContent = money(winningsPool());
+}
 function openCapital() {
   $('#f-cap').value = state.capital ? String(state.capital) : ''; $('#e-cap').hidden = true; $('#w-cap').setAttribute('aria-invalid', 'false');
+  $('#f-dep').value = ''; $('#f-dep-date').value = todayStr(); $('#e-dep').hidden = true; $('#w-dep').setAttribute('aria-invalid', 'false'); renderDeposits();
   S.cap.open(); if (finePointer.matches) setTimeout(() => $('#f-cap').focus(), 60);
 }
 

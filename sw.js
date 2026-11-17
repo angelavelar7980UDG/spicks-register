@@ -1,6 +1,6 @@
 /* Modo sin conexión: guarda la app en el dispositivo y la sirve aunque no haya internet.
    Con internet siempre intenta la versión más reciente primero. */
-const CACHE = 'spicks-register-v3';
+const CACHE = 'spicks-register-v4';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'spicks_simbolo.svg',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/favicon-32.png'];
 
