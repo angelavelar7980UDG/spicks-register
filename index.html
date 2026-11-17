@@ -662,6 +662,14 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 .icon-btn.sm { width: 34px; height: 34px; }
 .icon-btn.sm .i { width: 16px; height: 16px; }
 
+/* ---- Formato de momios ---- */
+.pf-table { display: grid; border-radius: 16px; background: var(--fill); padding: 6px 14px; }
+.pf-row { display: grid; grid-template-columns: 1fr 1fr; min-height: 40px; align-items: center; border-bottom: 1px solid var(--hair); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.pf-row:last-child { border-bottom: 0; }
+.pf-row.head { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; }
+.pf-row .on { color: var(--ink); font-weight: 700; }
+.pf-row span:last-child { text-align: right; }
+
 /* Accesibilidad: movimiento y transparencia reducidos */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -699,6 +707,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5l-4-4L4 16v4z"/></symbol>
     <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2H18v3"/><path d="M3.5 7.5v10a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H5.5a2 2 0 0 1-2-2z"/><path d="M16.5 14h.01"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
     <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5h.01"/></symbol>
     <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3.5 17.5l5.5-5.5 4 4 7.5-8.5"/></symbol>
@@ -723,6 +732,8 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
         <div class="menu-wrap">
           <button class="icon-btn" id="btnMenu" aria-label="Más opciones" aria-haspopup="menu" aria-expanded="false"><svg class="i"><use href="#i-dots"/></svg></button>
           <div class="menu" id="menu" role="menu">
+            <button role="menuitem" data-act="prefs"><svg class="i"><use href="#i-sliders"/></svg>Formato de momios…</button>
+            <hr>
             <button role="menuitem" data-act="csv"><svg class="i"><use href="#i-download"/></svg>Exportar a Excel (CSV)</button>
             <button role="menuitem" data-act="backup"><svg class="i"><use href="#i-download"/></svg>Guardar respaldo (JSON)</button>
             <button role="menuitem" data-act="restore"><svg class="i"><use href="#i-upload"/></svg>Restaurar respaldo…</button>
@@ -813,7 +824,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
       <article class="card kpi">
         <p class="eyebrow">Promedios</p>
         <div class="kpi-val" id="kOdds"><span class="num">0.00</span></div>
-        <small>Cuota promedio (decimal)</small>
+        <small id="kOddsLbl">Cuota promedio (decimal)</small>
         <div class="divider-sm"></div>
         <div class="kv"><span>Apuesta promedio</span><b id="kAvgStake">$0.00</b></div>
         <div class="kv"><span>Mejor apuesta</span><b id="kBest" class="pos">—</b></div>
@@ -878,7 +889,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
           </select>
         </div>
       </div>
-      <div class="row-head" aria-hidden="true"><span></span><span>Evento</span><span class="r">Cuota</span><span class="r">Monto</span><span class="r">Estado</span><span class="r">Resultado</span></div>
+      <div class="row-head" aria-hidden="true"><span></span><span>Evento</span><span class="r" id="thOdds">Cuota</span><span class="r">Monto</span><span class="r">Estado</span><span class="r">Resultado</span></div>
       <ul class="rows" id="rows"></ul>
       <div class="more" id="moreWrap" hidden><button class="btn" id="btnMore">Mostrar más</button></div>
       <div class="empty" id="empty" hidden></div>
@@ -925,12 +936,20 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 
       <div class="row2">
         <div class="field">
-          <label class="lbl" for="f-odds">Cuota decimal</label>
+          <div class="lbl-row">
+            <label class="lbl" for="f-odds" id="lblOdds">Cuota decimal</label>
+            <div class="seg sm" id="f-oddsfmt" role="radiogroup" aria-label="Formato del momio">
+              <span class="seg-thumb"></span>
+              <button type="button" role="radio" data-value="decimal" title="Cuota decimal (1.85)">DEC</button>
+              <button type="button" role="radio" data-value="american" title="Momio americano (-118)">AME</button>
+            </div>
+          </div>
           <div class="stepper" id="w-odds">
             <button type="button" data-step="-0.05" aria-label="Bajar cuota">−</button>
-            <input id="f-odds" inputmode="decimal" placeholder="1.85" aria-describedby="e-odds">
+            <input id="f-odds" inputmode="decimal" placeholder="1.85" aria-describedby="h-odds e-odds">
             <button type="button" data-step="0.05" aria-label="Subir cuota">+</button>
           </div>
+          <p class="hint" id="h-odds"></p>
           <p class="hint err" id="e-odds" hidden></p>
         </div>
         <div class="field">
@@ -1001,6 +1020,31 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
       <button type="submit" class="btn primary" id="btnSave">Guardar apuesta</button>
     </div>
   </form>
+</div>
+
+<!-- Formato de momios -->
+<div class="overlay" id="ov-prefs">
+  <div class="scrim" data-close></div>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="pf-title">
+    <div class="sheet-top" data-drag>
+      <div class="grip"></div>
+      <div class="sheet-head">
+        <h2 id="pf-title">Formato de momios</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <p class="sheet-copy">Elige cómo ves y capturas los momios. Tus apuestas se guardan igual: solo cambia cómo se muestran.</p>
+      <div class="seg block" id="pf-seg" role="radiogroup" aria-label="Formato de momios">
+        <span class="seg-thumb"></span>
+        <button type="button" role="radio" data-value="decimal">Decimal</button>
+        <button type="button" role="radio" data-value="american">Americano</button>
+      </div>
+      <div class="pf-table" id="pfExample" aria-label="Equivalencias de ejemplo"></div>
+      <p class="hint">Se guarda en este dispositivo: cada persona elige el suyo.</p>
+    </div>
+    <div class="sheet-foot"><button type="button" class="btn primary" data-close>Listo</button></div>
+  </section>
 </div>
 
 <!-- Capital inicial -->
@@ -1156,14 +1200,14 @@ const PAGE = 30;
 /* ==========================================================================
    Estado y persistencia
    ========================================================================== */
-let state = { bets: [], capital: 0, deposits: [], demo: false, chartMode: 'bankroll', range: 'all', theme: null, lastCategory: 'Fútbol' };
+let state = { bets: [], capital: 0, deposits: [], demo: false, chartMode: 'bankroll', range: 'all', theme: null, lastCategory: 'Fútbol', oddsFormat: 'decimal' };
 const ui = { status: 'ALL', sport: 'ALL', q: '', sort: 'new', limit: PAGE, flashId: null };
 let memoryStore = null;
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { state = { ...state, ...JSON.parse(raw) }; state.deposits = (Array.isArray(state.deposits) ? state.deposits : []).map(cleanDeposit).filter(Boolean); return; }
+    if (raw) { state = { ...state, ...JSON.parse(raw) }; state.deposits = (Array.isArray(state.deposits) ? state.deposits : []).map(cleanDeposit).filter(Boolean); state.oddsFormat = state.oddsFormat === 'american' ? 'american' : 'decimal'; return; }
   } catch (e) { /* almacenamiento bloqueado: se trabaja en memoria */ }
   state.bets = demoBets(); state.capital = 10000; state.demo = true;
   save();
@@ -1214,6 +1258,17 @@ function profitOf(b) {
 const potentialProfit = b => (b.payout > 0 ? round2(b.payout - b.stake) : round2(b.stake * (b.odds - 1)));
 /* La cuota se muestra con 2 decimales, y con más solo si se capturó con más precisión */
 const fmtOdds = o => { const t = (Math.round(o * 10000) / 10000).toFixed(4).replace(/0+$/, ''); const [i, d = ''] = t.split('.'); return i + '.' + d.padEnd(2, '0'); };
+/* Momios: se guardan siempre como cuota decimal exacta; el formato elegido solo cambia cómo se ven y se capturan */
+const isAmerican = () => state.oddsFormat === 'american';
+const parseAmerican = s => { const v = parseFloat(String(s).trim().replace(/\u2212/g, '-').replace(/\s/g, '').replace(',', '.')); return isFinite(v) ? v : NaN; };
+const validAmerican = a => isFinite(a) && Math.abs(a) >= 100;
+const americanToDecimal = a => (a > 0 ? 1 + a / 100 : 1 + 100 / Math.abs(a));
+const decimalToAmerican = d => (d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)));
+const signedNum = n => (n > 0 ? '+' : '') + n;                              // para escribir en el campo
+const amText = n => (n > 0 ? '+' : n < 0 ? '\u2212' : '') + Math.abs(n);     // para mostrar
+const amOf = b => (b.american != null ? b.american : decimalToAmerican(b.odds));
+const oddsText = b => (isAmerican() ? amText(amOf(b)) : (b.american != null ? b.odds.toFixed(2) : fmtOdds(b.odds)));
+const oddsWord = () => (isAmerican() ? 'Momio' : 'Cuota');
 /* Depósitos: dinero nuevo tuyo que sube el bankroll sin ser ganancia */
 const depositsTotal = () => round2(state.deposits.reduce((a, d) => a + d.amount, 0));
 const contributed = () => round2(state.capital + depositsTotal());
@@ -1467,7 +1522,7 @@ function initSeg(el, onChange) {
 /* ==========================================================================
    Render general
    ========================================================================== */
-let segRange, segChart, segType, segPay;
+let segRange, segChart, segType, segPay, segOdds, segPref;
 let introDone = false;
 
 function renderAll(animate = false) {
@@ -1544,7 +1599,8 @@ function renderKPIs() {
   const tot = s.gw + s.gl;
   $('#kGwBar').innerHTML = tot ? `<i style="flex-grow:${s.gw};background:var(--pos)"></i><i style="flex-grow:${s.gl};background:var(--neg)"></i>` : '';
 
-  countTo($('.num', $('#kOdds')), s.avgOdds, v => v.toFixed(2));
+  $('#kOddsLbl').textContent = isAmerican() ? 'Momio promedio (americano)' : 'Cuota promedio (decimal)';
+  countTo($('.num', $('#kOdds')), s.avgOdds, v => (isAmerican() ? (v > 1 ? amText(decimalToAmerican(v)) : '—') : v.toFixed(2)));
   $('#kAvgStake').textContent = money(s.avgStake);
   const best = $('#kBest'); best.textContent = s.best === null ? '—' : money(s.best, { sign: true }); best.className = s.best === null ? '' : sgn(s.best);
 }
@@ -1739,6 +1795,7 @@ function renderHistory() {
   if (ui.sport !== 'ALL' && !cats.includes(ui.sport)) ui.sport = 'ALL';
   sel.value = ui.sport; $('#fSort').value = ui.sort;
 
+  $('#thOdds').textContent = oddsWord();
   const filtered = sortList(ui.status === 'ALL' ? base : base.filter(b => b.status === ui.status));
   const shown = filtered.slice(0, ui.limit);
   $('#histSub').textContent = `${filtered.length} ${filtered.length === 1 ? 'apuesta' : 'apuestas'}${ui.sport !== 'ALL' ? ' · ' + catLabel(ui.sport) : ''}`;
@@ -1776,8 +1833,8 @@ function rowHTML(b, i) {
         <div class="r-event">${esc(b.event)}</div>
         <div class="r-meta-d"><span>${fmtShort(b.date)}</span><span>${esc(catLabel(b.category))}</span><span>${esc(b.type)}</span>${reinv}</div>
       </div>
-      <div class="r-meta"><span>${fmtShort(b.date)}</span><span class="m-nums">${fmtOdds(b.odds)} · ${money(b.stake)}</span>${b.type !== 'Simple' ? `<span>${esc(b.type)}</span>` : ''}${reinv}</div>
-      <div class="c-odds">${fmtOdds(b.odds)}</div>
+      <div class="r-meta"><span>${fmtShort(b.date)}</span><span class="m-nums">${oddsText(b)} · ${money(b.stake)}</span>${b.type !== 'Simple' ? `<span>${esc(b.type)}</span>` : ''}${reinv}</div>
+      <div class="c-odds">${oddsText(b)}</div>
       <div class="c-stake">${money(b.stake)}</div>
       <div class="c-pill"><span class="pill ${st.cls}">${icon(st.icon)}${b.status}</span></div>
       <div class="c-res">${res}</div>
@@ -1818,8 +1875,35 @@ function payoutProblem(stake) {
   if (segPay.value === 'total' && v <= stake) return 'El pago total debe ser mayor a lo que apostaste. ¿Es solo la ganancia?';
   return '';
 }
+/* Lo que representa el campo de momio: { dec, am, exact }. Al cambiar de formato solo cambia el texto, no el valor */
+let formOdds = null, oddsTyped = false;
+function oddsToInput(o, fmt = state.oddsFormat) {
+  if (!o) return '';
+  if (fmt === 'american') return signedNum(o.am != null ? o.am : decimalToAmerican(o.dec));
+  return o.am != null ? o.dec.toFixed(2) : fmtOdds(o.dec);
+}
+function syncOddsFromInput() {
+  const raw = $('#f-odds').value.trim();
+  if (!raw) { formOdds = null; return; }
+  if (isAmerican()) { const a = parseAmerican(raw); formOdds = validAmerican(a) ? { dec: americanToDecimal(a), am: a, exact: true } : null; }
+  else { const d = parseOdds(raw); formOdds = isFinite(d) && d > 1 ? { dec: d, am: null, exact: false } : null; }
+}
+const oddsMessage = () => (isAmerican() ? 'Escribe un momio de +100 o más, o de −100 o menos (ej. −110 o +150).' : 'La cuota debe ser mayor a 1.00 (ej. 1.85).');
+function applyOddsFormatToForm() {
+  const am = isAmerican(), inp = $('#f-odds'), btns = $$('#w-odds button');
+  $('#lblOdds').textContent = am ? 'Momio americano' : 'Cuota decimal';
+  inp.inputMode = am ? 'numeric' : 'decimal'; inp.placeholder = am ? '+150 o -110' : '1.85';
+  btns[0].setAttribute('aria-label', am ? 'Momio negativo (favorito)' : 'Bajar cuota');
+  btns[1].setAttribute('aria-label', am ? 'Momio positivo (no favorito)' : 'Subir cuota');
+  inp.value = oddsToInput(formOdds); segOdds.set(state.oddsFormat, false);
+}
+function setOddsFormat(fmt) {
+  if (fmt !== 'american' && fmt !== 'decimal') return;
+  if (state.oddsFormat === fmt) { segPref.set(fmt); return; }
+  state.oddsFormat = fmt; save(); renderAll(); applyOddsFormatToForm(); segPref.set(fmt); renderPrefsExample(); updatePreview();
+}
 function formVals() {
-  return { odds: parseOdds($('#f-odds').value), stake: parseMoney($('#f-stake').value), cash: parseMoney($('#f-cash').value) };
+  return { odds: formOdds ? formOdds.dec : NaN, stake: parseMoney($('#f-stake').value), cash: parseMoney($('#f-cash').value) };
 }
 function updateQuick() {
   const pool = winningsPool(editId), br = Math.max(0, contributed() + stats(state.bets).net);
@@ -1848,7 +1932,9 @@ function updatePreview() {
   if (formReinv && s > pool) { warn.hidden = false; $('span', warn).textContent = pool > 0 ? `Superas tus ganancias disponibles por ${money(s - pool)}. Puedes guardarla igual.` : 'Aún no tienes ganancias netas disponibles. Puedes guardarla igual.'; }
   else warn.hidden = true;
   // Validación en vivo (solo si el campo ya tiene contenido)
-  fieldError('odds', $('#f-odds').value.trim() && !(isFinite(odds) && odds > 1) ? 'La cuota debe ser mayor a 1.00 (ej. 1.85).' : '');
+  const rawOdds = $('#f-odds').value.trim();
+  fieldError('odds', rawOdds && !formOdds && !/^[+\-\u2212]$/.test(rawOdds) ? oddsMessage() : '');
+  $('#h-odds').textContent = formOdds ? (isAmerican() ? `Equivale a ${formOdds.dec.toFixed(2)} en decimal` : `Equivale a ${amText(formOdds.am != null ? formOdds.am : decimalToAmerican(formOdds.dec))} en americano`) : '';
   fieldError('stake', $('#f-stake').value.trim() && !(isFinite(stake) && stake > 0) ? 'Escribe un monto mayor a $0.' : '');
   fieldError('cash', formStatus === 'Cashout' && $('#f-cash').value.trim() && !(isFinite(cash) && cash >= 0) ? 'Escribe un monto válido.' : '');
   fieldError('payout', payoutProblem(s));
@@ -1874,7 +1960,7 @@ function openBet(id = null, preset = {}) {
   $('#f-event').value = b ? b.event : '';
   setCat(b ? b.category : state.lastCategory);
   segType.set(b ? b.type : 'Simple', false);
-  $('#f-odds').value = b ? fmtOdds(b.odds) : '';
+  formOdds = b ? { dec: b.odds, am: b.american != null ? b.american : null, exact: true } : null; oddsTyped = false; applyOddsFormatToForm();
   $('#f-stake').value = b ? String(b.stake) : '';
   $('#f-cash').value = b && b.status === 'Cashout' ? String(b.cashout) : '';
   $('#f-date').value = b ? b.date : todayStr();
@@ -1887,7 +1973,7 @@ function openBet(id = null, preset = {}) {
   updatePreview();
   S.bet.open();
   requestAnimationFrame(() => {
-    segType.place(false); segPay.place(false); $('.sheet-body', S.bet.el).scrollTop = 0;
+    segType.place(false); segPay.place(false); segOdds.place(false); $('.sheet-body', S.bet.el).scrollTop = 0;
     if (preset.focusPayout) { const f = $('#f-payout'); f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); }
     else if (!b && finePointer.matches) $('#f-event').focus({ preventScroll: true });
   });
@@ -1897,14 +1983,14 @@ function submitBet(e) {
   const ev = $('#f-event').value.trim(), { odds, stake, cash } = formVals();
   let bad = null;
   if (!ev) { fieldError('event', 'Escribe el evento y tu selección.'); bad = bad || $('#f-event'); } else fieldError('event', '');
-  if (!(isFinite(odds) && odds > 1)) { fieldError('odds', 'La cuota debe ser mayor a 1.00 (ej. 1.85).'); bad = bad || $('#f-odds'); }
+  if (!(isFinite(odds) && odds > 1)) { fieldError('odds', oddsMessage()); bad = bad || $('#f-odds'); }
   if (!(isFinite(stake) && stake > 0)) { fieldError('stake', 'Escribe un monto mayor a $0.'); bad = bad || $('#f-stake'); }
   if (formStatus === 'Cashout' && !(isFinite(cash) && cash >= 0)) { fieldError('cash', 'Escribe cuánto recuperaste.'); bad = bad || $('#f-cash'); }
   const pp = payoutProblem(stake); if (pp) { fieldError('payout', pp); bad = bad || $('#f-payout'); }
   if (bad) { bad.focus(); return; }
   const rec = {
     date: $('#f-date').value || todayStr(), event: ev, category: formCat, type: segType.value || 'Simple',
-    odds: Math.round(odds * 10000) / 10000, stake: round2(stake), status: formStatus,
+    odds: formOdds.exact ? formOdds.dec : Math.round(formOdds.dec * 10000) / 10000, american: formOdds.am != null ? formOdds.am : undefined, stake: round2(stake), status: formStatus,
     cashout: formStatus === 'Cashout' ? round2(cash) : 0, reinvest: formReinv
   };
   if (payoutApplies()) rec.payout = exactPayout(round2(stake)) ?? 0;   // en otros estados se conserva el que ya tenía
@@ -1945,7 +2031,7 @@ function resolve(id, status, cashout = 0) {
 let cashId = null;
 function openCash(id) {
   const b = state.bets.find(x => x.id === id); if (!b) return; cashId = id;
-  $('#cashInfo').innerHTML = `<b>${esc(b.event)}</b><br>Apostaste ${money(b.stake)} a cuota ${fmtOdds(b.odds)}.`;
+  $('#cashInfo').innerHTML = `<b>${esc(b.event)}</b><br>Apostaste ${money(b.stake)} a ${oddsWord().toLowerCase()} ${oddsText(b)}.`;
   $('#f-qcash').value = ''; $('#e-qcash').hidden = true; $('#w-qcash').setAttribute('aria-invalid', 'false');
   S.cash.open(); if (finePointer.matches) setTimeout(() => $('#f-qcash').focus(), 60);
 }
@@ -1960,9 +2046,9 @@ function download(name, mime, text) {
 }
 function exportCSV() {
   if (!state.bets.length) { toast('No hay apuestas para exportar'); return; }
-  const head = ['Fecha', 'Deporte', 'Tipo', 'Evento', 'Cuota', 'Monto (MXN)', 'Estado', 'Cashout (MXN)', 'Pago exacto de la casa (MXN)', 'Origen del dinero', 'Resultado neto (MXN)'];
+  const head = ['Fecha', 'Deporte', 'Tipo', 'Evento', 'Cuota decimal', 'Momio americano', 'Monto (MXN)', 'Estado', 'Cashout (MXN)', 'Pago exacto de la casa (MXN)', 'Origen del dinero', 'Resultado neto (MXN)'];
   const q = v => '"' + String(v).replace(/"/g, '""') + '"';
-  const lines = state.bets.slice().sort(byDate).map(b => [b.date, q(b.category), q(b.type), q(b.event), fmtOdds(b.odds), b.stake.toFixed(2), b.status, b.status === 'Cashout' ? b.cashout.toFixed(2) : '', b.payout > 0 ? b.payout.toFixed(2) : '', b.reinvest ? 'Ganancias' : 'Dinero propio', profitOf(b).toFixed(2)].join(','));
+  const lines = state.bets.slice().sort(byDate).map(b => [b.date, q(b.category), q(b.type), q(b.event), fmtOdds(b.odds), signedNum(amOf(b)), b.stake.toFixed(2), b.status, b.status === 'Cashout' ? b.cashout.toFixed(2) : '', b.payout > 0 ? b.payout.toFixed(2) : '', b.reinvest ? 'Ganancias' : 'Dinero propio', profitOf(b).toFixed(2)].join(','));
   download(`apuestas-${todayStr()}.csv`, 'text/csv;charset=utf-8', '﻿' + [head.join(','), ...lines].join('\r\n'));
   toast('CSV descargado', { kind: 'ok', ms: 2600 });
 }
@@ -1979,7 +2065,7 @@ function importBackup(file) {
       const bets = d.bets.map((b, i) => {
         const odds = Number(b.odds ?? b.decimalOdds), stake = Number(b.stake);
         if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b.date) || !(odds > 1) || !(stake > 0) || !STATUS[b.status]) { dropped++; return null; }
-        return { id: String(b.id || 'imp-' + i + '-' + Date.now()), date: b.date, event: String(b.event || 'Sin descripción').slice(0, 140), category: CATS[b.category] ? b.category : 'Otro', type: TYPES.includes(b.type) ? b.type : 'Simple', odds, stake, status: b.status, cashout: Number(b.cashout ?? b.cashoutAmount) || 0, reinvest: !!b.reinvest, payout: Number(b.payout) > 0 ? Number(b.payout) : 0, createdAt: Number(b.createdAt) || Date.now() + i };
+        return { id: String(b.id || 'imp-' + i + '-' + Date.now()), date: b.date, event: String(b.event || 'Sin descripción').slice(0, 140), category: CATS[b.category] ? b.category : 'Otro', type: TYPES.includes(b.type) ? b.type : 'Simple', odds, stake, status: b.status, cashout: Number(b.cashout ?? b.cashoutAmount) || 0, reinvest: !!b.reinvest, payout: Number(b.payout) > 0 ? Number(b.payout) : 0, american: validAmerican(Number(b.american)) ? Number(b.american) : undefined, createdAt: Number(b.createdAt) || Date.now() + i };
       }).filter(Boolean);
       const deps = (Array.isArray(d.deposits) ? d.deposits : []).map((x, i) => cleanDeposit(x, i)).filter(Boolean);
       ask({ title: 'Restaurar respaldo', text: `Se reemplazará tu registro actual por ${bets.length} apuestas${deps.length ? ` y ${deps.length} ${deps.length === 1 ? 'depósito' : 'depósitos'}` : ''} del respaldo${dropped ? ` (${dropped} inválidas se omitieron)` : ''}. Podrás deshacerlo desde el aviso.`, ok: 'Restaurar', danger: false })
@@ -2000,7 +2086,8 @@ function ask({ title, text, ok = 'Confirmar', danger = true }) {
 }
 function runAct(act) {
   closeMenu();
-  if (act === 'csv') exportCSV();
+  if (act === 'prefs') openPrefs();
+  else if (act === 'csv') exportCSV();
   else if (act === 'backup') exportBackup();
   else if (act === 'restore') $('#fileIn').click();
   else if (act === 'demo') ask({ title: 'Cargar datos de ejemplo', text: 'Se reemplazará tu registro actual por datos ficticios. Podrás deshacerlo desde el aviso.', ok: 'Cargar ejemplo', danger: false }).then(y => { if (y) withUndo('Datos de ejemplo cargados', () => { state.bets = demoBets(); state.deposits = []; state.capital = 10000; state.demo = true; }); });
@@ -2084,13 +2171,21 @@ function bind() {
   $('#reinvToggle').addEventListener('click', () => setReinv(!formReinv));
   $('#btnUsePool').addEventListener('click', () => { $('#f-stake').value = String(winningsPool(editId)); updatePreview(); });
   $('#quick').addEventListener('click', e => { const b = e.target.closest('[data-amt]'); if (!b) return; $('#f-stake').value = String(b.dataset.amt); updatePreview(); });
+  $('#f-odds').addEventListener('input', () => { oddsTyped = true; syncOddsFromInput(); });
   ['#f-odds', '#f-stake', '#f-cash', '#f-payout'].forEach(s => $(s).addEventListener('input', updatePreview));
   $('#w-odds').addEventListener('click', e => {
     const b = e.target.closest('[data-step]'); if (!b) return;
-    const cur = parseOdds($('#f-odds').value), step = Number(b.dataset.step), base = isFinite(cur) && cur > 1 ? cur : 1.9 - step;
-    $('#f-odds').value = Math.max(1.01, Math.round((base + step) * 100) / 100).toFixed(2); updatePreview();
+    const inp = $('#f-odds'), step = Number(b.dataset.step);
+    if (isAmerican()) {   // en americano, − y + fijan el signo (el teclado del teléfono no trae signo)
+      const a = parseAmerican(inp.value), digits = isFinite(a) ? String(Math.abs(a)) : inp.value.replace(/[^\d.]/g, '');
+      inp.value = (step < 0 ? '-' : '+') + digits; inp.focus({ preventScroll: true });
+    } else {
+      const cur = parseOdds(inp.value), base = isFinite(cur) && cur > 1 ? cur : 1.9 - step;
+      inp.value = Math.max(1.01, Math.round((base + step) * 100) / 100).toFixed(2);
+    }
+    oddsTyped = true; syncOddsFromInput(); updatePreview();
   });
-  $('#f-odds').addEventListener('blur', () => { const v = parseOdds($('#f-odds').value); if (isFinite(v) && v > 1) $('#f-odds').value = fmtOdds(v); });
+  $('#f-odds').addEventListener('blur', () => { if (oddsTyped && formOdds) $('#f-odds').value = oddsToInput(formOdds); });
   $('#f-event').addEventListener('input', () => fieldError('event', ''));
 
   // Capital
@@ -2132,6 +2227,15 @@ function renderDeposits() {
   t.innerHTML = list.length ? `Total depositado <b>${money(depositsTotal())}</b>${list.length > shown.length ? ` · se muestran los ${shown.length} más recientes de ${list.length}` : ''}` : '';
   $('#depPool').textContent = money(winningsPool());
 }
+function renderPrefsExample() {
+  const am = isAmerican();
+  $('#pfExample').innerHTML = `<div class="pf-row head"><span${am ? '' : ' class="on"'}>Decimal</span><span${am ? ' class="on"' : ''}>Americano</span></div>` +
+    [1.5, 1.91, 2, 2.5, 4].map(d => `<div class="pf-row"><span${am ? '' : ' class="on"'}>${d.toFixed(2)}</span><span${am ? ' class="on"' : ''}>${amText(decimalToAmerican(d))}</span></div>`).join('');
+}
+function openPrefs() {
+  segPref.set(state.oddsFormat, false); renderPrefsExample(); S.prefs.open();
+  requestAnimationFrame(() => segPref.place(false));
+}
 function openCapital() {
   $('#f-cap').value = state.capital ? String(state.capital) : ''; $('#e-cap').hidden = true; $('#w-cap').setAttribute('aria-invalid', 'false');
   $('#f-dep').value = ''; $('#f-dep-date').value = todayStr(); $('#e-dep').hidden = true; $('#w-dep').setAttribute('aria-invalid', 'false'); renderDeposits();
@@ -2143,12 +2247,14 @@ function openCapital() {
    ========================================================================== */
 function init() {
   load();
-  S.bet = new Sheet('ov-bet'); S.cap = new Sheet('ov-capital'); S.cash = new Sheet('ov-cash'); S.confirm = new Sheet('ov-confirm');
+  S.bet = new Sheet('ov-bet'); S.cap = new Sheet('ov-capital'); S.cash = new Sheet('ov-cash'); S.confirm = new Sheet('ov-confirm'); S.prefs = new Sheet('ov-prefs');
   segRange = initSeg($('#rangeSeg'), v => { state.range = v; ui.limit = PAGE; save(); renderKPIs(); renderChart(true); renderSports(); renderHistory(); });
   segChart = initSeg($('#chartSeg'), v => { state.chartMode = v; save(); $('#chartTitle').textContent = v === 'bankroll' ? 'Evolución del bankroll' : 'Ganancia acumulada'; renderChart(true); });
   segType = initSeg($('#f-type'));
   segPay = initSeg($('#f-payoutmode'), () => updatePreview()); segPay.set('total', false);
-  buildFormChoices(); initChartEvents(); bind();
+  segOdds = initSeg($('#f-oddsfmt'), v => setOddsFormat(v)); segOdds.set(state.oddsFormat, false);
+  segPref = initSeg($('#pf-seg'), v => setOddsFormat(v)); segPref.set(state.oddsFormat, false);
+  buildFormChoices(); initChartEvents(); bind(); applyOddsFormatToForm();
   applyTheme(state.theme, false);
   renderAll(true);
   requestAnimationFrame(() => { segRange.place(false); segChart.place(false); });
