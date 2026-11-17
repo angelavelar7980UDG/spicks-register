@@ -7,7 +7,7 @@
 <meta name="description" content="Registro personal de apuestas en pesos mexicanos: ganancias, pérdidas, inversión propia y reinversión de ganancias.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f2f2ef" id="metaTheme">
+<meta name="theme-color" content="#0b0e13" id="metaTheme">
 <link rel="icon" href="spicks_simbolo.svg" type="image/svg+xml">
 <link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Spicks Register">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <script>
 /* Aplica el tema guardado antes del primer pintado para evitar el flash */
@@ -34,26 +34,29 @@ try { var t = JSON.parse(localStorage.getItem('spicks_register_v1') || '{}').the
 
   --r-card: 22px;
   --r-ctl: 14px;
-
   color-scheme: light;
-  --page: #f2f2ef;
-  --surface: #fcfcfb;
+  --page: #f5f2ee;
+  --surface: #fffdfb;
   --surface-2: #ffffff;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --ink-3: #898781;
-  --line: #e1e0d9;
-  --axis: #c3c2b7;
-  --fill: #eeede8;
-  --fill-2: #e4e3dd;
-  --hair: rgba(11, 11, 11, 0.08);
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 8px 24px -12px rgba(11, 11, 11, 0.12);
-  --shadow-pop: 0 2px 6px rgba(11, 11, 11, 0.08), 0 24px 48px -12px rgba(11, 11, 11, 0.28);
-  --scrim: rgba(11, 11, 11, 0.38);
+  --ink: #0b0e13;
+  --ink-2: #4f5560;
+  --ink-3: #868b95;
+  --line: #e8e2da;
+  --axis: #cdc6bc;
+  --fill: #f0ebe4;
+  --fill-2: #e6dfd6;
+  --thumb: #ffffff;
+  --hair: rgba(11, 14, 19, 0.09);
+  --shadow: 0 1px 2px rgba(11, 14, 19, 0.04), 0 10px 28px -14px rgba(60, 30, 10, 0.22);
+  --shadow-pop: 0 2px 6px rgba(11, 14, 19, 0.08), 0 24px 48px -12px rgba(11, 14, 19, 0.32);
+  --scrim: rgba(11, 14, 19, 0.45);
 
-  --accent: #2a78d6;
-  --accent-ink: #ffffff;
-  --series: #2a78d6;
+  --accent: #ff5a1f;
+  --accent-ink: #0b0e13;
+  --accent-text: #be3d0a;
+  --series: #ff5a1f;
+  --cash: #2a78d6;
+  --cash-text: #1b5fb4;
   --pos: #0ca30c;
   --pos-text: #006300;
   --neg: #d03b3b;
@@ -63,61 +66,70 @@ try { var t = JSON.parse(localStorage.getItem('spicks_register_v1') || '{}').the
   --tint-pos: rgba(12, 163, 12, 0.12);
   --tint-neg: rgba(208, 59, 59, 0.11);
   --tint-warn: rgba(250, 178, 25, 0.2);
-  --tint-accent: rgba(42, 120, 214, 0.12);
+  --tint-accent: rgba(255, 90, 31, 0.12);
+  --tint-cash: rgba(42, 120, 214, 0.12);
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #1a1a19;
-    --surface-2: #222221;
-    --ink: #f0efec;
-    --ink-2: #c3c2b7;
-    --ink-3: #898781;
-    --line: #2c2c2a;
-    --axis: #383835;
-    --fill: #262625;
-    --fill-2: #2f2f2d;
+    --page: #0b0e13;
+    --surface: #12161d;
+    --surface-2: #171c25;
+    --ink: #f4f2ee;
+    --ink-2: #bcc0c8;
+    --ink-3: #7e8590;
+    --line: #222935;
+    --axis: #333c4a;
+    --fill: #1f2631;
+    --fill-2: #29313e;
+    --thumb: #374152;
     --hair: rgba(255, 255, 255, 0.09);
-    --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.6);
-    --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 28px 60px -12px rgba(0, 0, 0, 0.8);
-    --scrim: rgba(0, 0, 0, 0.55);
-    --accent: #3987e5;
-    --series: #3987e5;
-    --pos-text: #25b525;
-    --neg-text: #ee6b6b;
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -14px rgba(0, 0, 0, 0.7);
+    --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 28px 60px -12px rgba(0, 0, 0, 0.85);
+    --scrim: rgba(0, 0, 0, 0.6);
+    --accent-text: #ff8556;
+    --series: #ff6a33;
+    --cash: #3987e5;
+    --cash-text: #78b0f5;
+    --pos-text: #2fc15d;
+    --neg-text: #ff7a7a;
     --warn-text: #fab219;
-    --tint-pos: rgba(12, 163, 12, 0.18);
-    --tint-neg: rgba(238, 107, 107, 0.16);
+    --tint-pos: rgba(47, 193, 93, 0.17);
+    --tint-neg: rgba(255, 122, 122, 0.16);
     --tint-warn: rgba(250, 178, 25, 0.16);
-    --tint-accent: rgba(57, 135, 229, 0.18);
+    --tint-accent: rgba(255, 90, 31, 0.18);
+    --tint-cash: rgba(57, 135, 229, 0.18);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #0d0d0d;
-  --surface: #1a1a19;
-  --surface-2: #222221;
-  --ink: #f0efec;
-  --ink-2: #c3c2b7;
-  --ink-3: #898781;
-  --line: #2c2c2a;
-  --axis: #383835;
-  --fill: #262625;
-  --fill-2: #2f2f2d;
+  --page: #0b0e13;
+  --surface: #12161d;
+  --surface-2: #171c25;
+  --ink: #f4f2ee;
+  --ink-2: #bcc0c8;
+  --ink-3: #7e8590;
+  --line: #222935;
+  --axis: #333c4a;
+  --fill: #1f2631;
+  --fill-2: #29313e;
+  --thumb: #374152;
   --hair: rgba(255, 255, 255, 0.09);
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.6);
-  --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 28px 60px -12px rgba(0, 0, 0, 0.8);
-  --scrim: rgba(0, 0, 0, 0.55);
-  --accent: #3987e5;
-  --series: #3987e5;
-  --pos-text: #25b525;
-  --neg-text: #ee6b6b;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -14px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 28px 60px -12px rgba(0, 0, 0, 0.85);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --accent-text: #ff8556;
+  --series: #ff6a33;
+  --cash: #3987e5;
+  --cash-text: #78b0f5;
+  --pos-text: #2fc15d;
+  --neg-text: #ff7a7a;
   --warn-text: #fab219;
-  --tint-pos: rgba(12, 163, 12, 0.18);
-  --tint-neg: rgba(238, 107, 107, 0.16);
+  --tint-pos: rgba(47, 193, 93, 0.17);
+  --tint-neg: rgba(255, 122, 122, 0.16);
   --tint-warn: rgba(250, 178, 25, 0.16);
-  --tint-accent: rgba(57, 135, 229, 0.18);
+  --tint-accent: rgba(255, 90, 31, 0.18);
+  --tint-cash: rgba(57, 135, 229, 0.18);
 }
 
 /* ==========================================================================
@@ -163,7 +175,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   transition: transform 160ms var(--ease-out), background-color 150ms ease, filter 150ms ease, opacity 150ms ease;
 }
 .btn:active { transform: scale(0.97); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: 0 10px 22px -12px var(--accent); }
 .btn.danger { background: var(--tint-neg); color: var(--neg-text); }
 .btn.sm { min-height: 40px; padding: 0 14px; font-size: 0.9rem; border-radius: 12px; }
 .btn[disabled] { opacity: 0.45; pointer-events: none; }
@@ -187,7 +199,7 @@ ul { list-style: none; margin: 0; padding: 0; }
 .seg.block { display: flex; }
 .seg-thumb {
   position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 10px;
-  background: var(--surface-2); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 0 0 0.5px var(--hair);
+  background: var(--thumb); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 0 0 0.5px var(--hair);
   transition: transform 250ms var(--ease-in-out), width 250ms var(--ease-in-out);
   pointer-events: none;
 }
@@ -209,7 +221,7 @@ ul { list-style: none; margin: 0; padding: 0; }
   transition: transform 160ms var(--ease-out), background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 .chip:active { transform: scale(0.96); }
-.chip[aria-checked="true"], .chip[aria-pressed="true"] { background: var(--tint-accent); color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.chip[aria-checked="true"], .chip[aria-pressed="true"] { background: var(--tint-accent); color: var(--accent-text); box-shadow: inset 0 0 0 1.5px var(--accent); }
 .chip .emo { font-size: 1.05rem; line-height: 1; }
 .chip .n { font-size: 0.78rem; opacity: 0.75; font-variant-numeric: tabular-nums; }
 @media (hover: hover) and (pointer: fine) {
@@ -257,12 +269,16 @@ input[type="date"].input { min-height: 50px; font-variant-numeric: tabular-nums;
    Header (material translúcido)
    ========================================================================== */
 .topbar {
+  --ink: #f4f2ee; --ink-2: rgba(244, 242, 238, 0.74); --ink-3: rgba(244, 242, 238, 0.5);
+  --fill: rgba(255, 255, 255, 0.1); --fill-2: rgba(255, 255, 255, 0.17); --hair: rgba(255, 255, 255, 0.12);
+  --neg-text: #ff8383; --pos-text: #3be07a;
+  color: var(--ink);
   position: sticky; top: 0; z-index: 30;
-  background: color-mix(in srgb, var(--page) 74%, transparent);
+  background: rgba(11, 14, 19, 0.97);
   -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
   padding-top: env(safe-area-inset-top);
 }
-.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--hair); opacity: 0; transition: opacity 200ms ease; }
+.topbar::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, #ff5a1f, rgba(255, 90, 31, 0) 75%); opacity: 0; transition: opacity 200ms ease; }
 .topbar.scrolled::after { opacity: 1; }
 .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -273,7 +289,7 @@ input[type="date"].input { min-height: 50px; font-variant-numeric: tabular-nums;
 .menu-wrap { position: relative; }
 .menu {
   position: absolute; right: 0; top: calc(100% + 8px); min-width: 252px; padding: 6px; z-index: 40;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  background: rgba(16, 20, 27, 0.95);
   -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px);
   border-radius: 18px; box-shadow: var(--shadow-pop); border: 1px solid var(--hair);
   transform-origin: top right; opacity: 0; transform: scale(0.95); visibility: hidden; pointer-events: none;
@@ -305,8 +321,13 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
 
 /* Hero */
 .hero {
-  position: relative; overflow: hidden; padding: 22px 20px 0;
-  background: radial-gradient(120% 150% at 0% 0%, color-mix(in srgb, var(--accent) 13%, var(--surface)) 0%, var(--surface) 62%);
+  --ink: #f4f2ee; --ink-2: rgba(244, 242, 238, 0.76); --ink-3: rgba(244, 242, 238, 0.5);
+  --hair: rgba(255, 255, 255, 0.13); --fill: rgba(255, 255, 255, 0.1); --fill-2: rgba(255, 255, 255, 0.17);
+  --pos-text: #3be07a; --neg-text: #ff8383; --tint-pos: rgba(59, 224, 122, 0.17); --tint-neg: rgba(255, 131, 131, 0.17);
+  position: relative; overflow: hidden; padding: 22px 20px 0; color: var(--ink);
+  background:
+    radial-gradient(90% 130% at 100% 0%, rgba(255, 90, 31, 0.6) 0%, rgba(255, 90, 31, 0) 62%),
+    linear-gradient(160deg, #161b24 0%, #0b0e13 70%);
 }
 @media (min-width: 720px) { .hero { padding: 28px 28px 0; } }
 .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -480,7 +501,7 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
 .pill .i { width: 13px; height: 13px; stroke-width: 2.6; }
 .s-ganada { background: var(--tint-pos); color: var(--pos-text); }
 .s-perdida { background: var(--tint-neg); color: var(--neg-text); }
-.s-cashout { background: var(--tint-accent); color: var(--accent); }
+.s-cashout { background: var(--tint-cash); color: var(--cash-text); }
 .s-nula { background: var(--fill); color: var(--ink-2); }
 .s-pendiente { background: var(--tint-warn); color: var(--warn-text); }
 .tag { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; background: var(--fill); color: var(--ink-2); }
@@ -493,7 +514,7 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
 .q .i { width: 15px; height: 15px; stroke-width: 2.6; }
 .q.win { background: var(--tint-pos); color: var(--pos-text); }
 .q.loss { background: var(--tint-neg); color: var(--neg-text); }
-.q.cash { background: var(--tint-accent); color: var(--accent); }
+.q.cash { background: var(--tint-cash); color: var(--cash-text); }
 .q.push { background: var(--fill); color: var(--ink-2); }
 @media (hover: hover) and (pointer: fine) { .q:hover { filter: brightness(0.94); } }
 .more { display: flex; justify-content: center; margin-top: 12px; }
@@ -603,6 +624,18 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
+/* ---- Identidad Spicks ---- */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(70% 50% at 100% 0%, rgba(255, 90, 31, 0.16), transparent 70%), radial-gradient(60% 45% at 0% 100%, rgba(255, 90, 31, 0.08), transparent 70%); }
+.hero-mark { position: absolute; right: -64px; top: -56px; width: min(64%, 300px); opacity: 0.2; transform: rotate(-14deg); pointer-events: none; user-select: none; -webkit-user-select: none; z-index: 0; }
+.hero > :not(.hero-mark) { position: relative; z-index: 1; }
+.brand h1 .wm { color: #ff7a45; }
+.big-mark { width: 88px; height: 88px; filter: drop-shadow(0 12px 24px rgba(255, 90, 31, 0.45)); }
+.sheet-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sheet-mark { width: 30px; height: 30px; flex: none; }
+.toast .t-ico .roll { display: block; width: 26px; height: 26px; opacity: 0; transform: rotate(-220deg) scale(0.3); transition: transform 650ms var(--ease-out), opacity 300ms var(--ease-out); }
+.toast.in .t-ico .roll { opacity: 1; transform: none; }
+
 /* Accesibilidad: movimiento y transparencia reducidos */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -654,7 +687,7 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
       <div class="brand">
         <img class="logo" src="spicks_simbolo.svg" alt="" width="40" height="40">
         <div>
-          <h1>Spicks Register</h1>
+          <h1>Spicks <span class="wm">Register</span></h1>
           <p>Registro de apuestas · MXN</p>
         </div>
       </div>
@@ -685,6 +718,7 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
 
     <!-- Resumen / saldo -->
     <section class="card hero reveal" style="--i:1" aria-label="Resumen de bankroll">
+      <img class="hero-mark" src="spicks_simbolo.svg" alt="" aria-hidden="true">
       <div class="hero-top">
         <div>
           <p class="eyebrow">Bankroll actual</p>
@@ -837,7 +871,7 @@ main { padding-block: 8px 120px; display: grid; gap: 16px; }
     <div class="sheet-top" data-drag>
       <div class="grip"></div>
       <div class="sheet-head">
-        <h2 id="bet-title">Nueva apuesta</h2>
+        <span class="sheet-title"><img class="sheet-mark" src="spicks_simbolo.svg" alt="" width="30" height="30"><h2 id="bet-title">Nueva apuesta</h2></span>
         <button type="button" class="icon-btn" data-close aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
       </div>
     </div>
@@ -1425,7 +1459,7 @@ function renderKPIs() {
   if (s.winRate == null) $('#kWin .num').textContent = '—';
   const parts = [
     ['Ganadas', s.W, 'var(--pos)', 'G'], ['Perdidas', s.L, 'var(--neg)', 'P'],
-    ['Cashout', s.CO, 'var(--series)', 'CO'], ['Nulas', s.NU, 'var(--axis)', 'N']
+    ['Cashout', s.CO, 'var(--cash)', 'CO'], ['Nulas', s.NU, 'var(--axis)', 'N']
   ];
   $('#kBar').innerHTML = settled ? parts.filter(p => p[1]).map(p => `<i style="flex-grow:${p[1]};background:${p[2]}" title="${p[0]}: ${p[1]}"></i>`).join('') : '';
   $('#kBar').setAttribute('aria-label', parts.map(p => `${p[1]} ${p[0].toLowerCase()}`).join(', '));
@@ -1631,7 +1665,7 @@ function renderHistory() {
   if (!filtered.length) {
     empty.hidden = false; rows.hidden = true; $('.row-head').style.display = 'none';
     if (!state.bets.length) {
-      empty.innerHTML = `<div class="big">🧾</div><h3>Aún no tienes apuestas</h3><p>Registra tu primera apuesta y aquí verás tu ganancia, tu inversión y tu rendimiento.</p><div class="btns"><button class="btn primary" data-open-bet>${icon('plus')}Registrar apuesta</button><button class="btn" data-act="demo">Ver datos de ejemplo</button></div>`;
+      empty.innerHTML = `<img class="big-mark" src="spicks_simbolo.svg" alt="" width="88" height="88"><h3>Aún no tienes apuestas</h3><p>Registra tu primera apuesta y aquí verás tu ganancia, tu inversión y tu rendimiento.</p><div class="btns"><button class="btn primary" data-open-bet>${icon('plus')}Registrar apuesta</button><button class="btn" data-act="demo">Ver datos de ejemplo</button></div>`;
     } else {
       empty.innerHTML = `<div class="big">🔎</div><h3>Sin resultados</h3><p>Ninguna apuesta coincide con los filtros actuales.</p><div class="btns"><button class="btn" id="btnClearFilters">Quitar filtros</button></div>`;
     }
@@ -1778,7 +1812,12 @@ function resolve(id, status, cashout = 0) {
   withUndo(`Marcada como ${status.toLowerCase()}`, () => { b.status = status; b.cashout = cashout; });
   const nb = state.bets.find(x => x.id === id);
   const p = profitOf(nb); const msg = status === 'Nula' ? 'Apuesta nula · se reembolsa' : `${status} · ${money(p, { sign: true })}`;
-  const t = $('#toasts').lastElementChild; if (t) { const sp = t.querySelector('span:not(.t-ico)'); if (sp) sp.textContent = msg; }
+  const t = $('#toasts').lastElementChild;
+  if (t) {
+    const sp = t.querySelector('span:not(.t-ico)'); if (sp) sp.textContent = msg;
+    // Victoria: el símbolo de Spicks rueda dentro del aviso
+    if (status === 'Ganada' || (status === 'Cashout' && p > 0)) { const ic = t.querySelector('.t-ico'); if (ic) ic.innerHTML = '<img class="roll" src="spicks_simbolo.svg" alt="" width="26" height="26">'; }
+  }
   setTimeout(() => { ui.flashId = null; }, 1800);
 }
 let cashId = null;
@@ -1855,7 +1894,6 @@ function applyTheme(t, persist = true) {
   if (persist) { state.theme = t || null; save(); }
   const dark = (t === 'dark') || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
   $('#themeIco use').setAttribute('href', dark ? '#i-sun' : '#i-moon');
-  $('#metaTheme').setAttribute('content', dark ? '#0d0d0d' : '#f2f2ef');
 }
 
 /* ==========================================================================
