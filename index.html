@@ -636,6 +636,15 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
 .toast .t-ico .roll { display: block; width: 26px; height: 26px; opacity: 0; transform: rotate(-220deg) scale(0.3); transition: transform 650ms var(--ease-out), opacity 300ms var(--ease-out); }
 .toast.in .t-ico .roll { opacity: 1; transform: none; }
 
+/* ---- Pago exacto de la casa ---- */
+.lbl-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.lbl .opt { font-weight: 500; color: var(--ink-3); }
+.seg.sm { padding: 2px; border-radius: 11px; }
+.seg.sm .seg-thumb { top: 2px; bottom: 2px; border-radius: 9px; }
+.seg.sm button { min-height: 30px; padding: 0 10px; font-size: 0.78rem; border-radius: 9px; }
+.impact.warnrow span, .impact.warnrow b { color: var(--warn-text); }
+.toast button.alt { background: color-mix(in srgb, var(--page) 18%, transparent); color: var(--page); }
+
 /* Accesibilidad: movimiento y transparencia reducidos */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -915,6 +924,21 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
       </div>
       <div class="quick" id="quick" aria-label="Montos rápidos"></div>
 
+      <!-- Pago exacto de la casa -->
+      <div class="field" id="payoutField">
+        <div class="lbl-row">
+          <label class="lbl" for="f-payout">Pago exacto de tu casa <span class="opt">(opcional)</span></label>
+          <div class="seg sm" id="f-payoutmode" role="radiogroup" aria-label="Qué número escribiste">
+            <span class="seg-thumb"></span>
+            <button type="button" role="radio" data-value="total">Pago total</button>
+            <button type="button" role="radio" data-value="profit">Solo ganancia</button>
+          </div>
+        </div>
+        <div class="money-in" id="w-payout"><span>$</span><input id="f-payout" inputmode="decimal" placeholder="Igual al cálculo" aria-describedby="h-payout e-payout"><em>MXN</em></div>
+        <p class="hint" id="h-payout">Si tu casa muestra un pago con centavos distintos al cálculo, escríbelo aquí y la app usará ese número.</p>
+        <p class="hint err" id="e-payout" hidden></p>
+      </div>
+
       <!-- Reinversión -->
       <div class="reinv-card" id="reinv">
         <button type="button" class="reinv-head" id="reinvToggle" role="switch" aria-checked="false">
@@ -952,6 +976,7 @@ body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-even
           <div><div class="k" id="pvK2">Ganancia neta potencial</div><div class="v" id="pvV2">$0.00</div></div>
         </div>
         <div class="impact"><span id="pvImpactK">Suma a tu inversión propia</span><b id="pvImpactV">$0.00</b></div>
+        <div class="impact" id="pvDiff" hidden><span id="pvDiffK">Tu casa vs. cálculo con la cuota</span><b id="pvDiffV">$0.00</b></div>
       </div>
     </div>
     <div class="sheet-foot">
@@ -1148,12 +1173,16 @@ function demoBets() {
    ========================================================================== */
 function profitOf(b) {
   switch (b.status) {
-    case 'Ganada': return round2(b.stake * (b.odds - 1));
+    case 'Ganada': return potentialProfit(b);
     case 'Perdida': return -b.stake;
     case 'Cashout': return round2((b.cashout || 0) - b.stake);
     default: return 0;
   }
 }
+/* Ganancia si gana: usa el pago exacto de la casa cuando existe; si no, cuota × monto */
+const potentialProfit = b => (b.payout > 0 ? round2(b.payout - b.stake) : round2(b.stake * (b.odds - 1)));
+/* La cuota se muestra con 2 decimales, y con más solo si se capturó con más precisión */
+const fmtOdds = o => { const t = (Math.round(o * 10000) / 10000).toFixed(4).replace(/0+$/, ''); const [i, d = ''] = t.split('.'); return i + '.' + d.padEnd(2, '0'); };
 const isSettled = b => b.status !== 'Pendiente';
 const isWin = b => b.status === 'Ganada' || (b.status === 'Cashout' && profitOf(b) > 0);
 const isLoss = b => b.status === 'Perdida' || (b.status === 'Cashout' && profitOf(b) < 0);
@@ -1397,7 +1426,7 @@ function initSeg(el, onChange) {
 /* ==========================================================================
    Render general
    ========================================================================== */
-let segRange, segChart, segType;
+let segRange, segChart, segType, segPay;
 let introDone = false;
 
 function renderAll(animate = false) {
@@ -1675,7 +1704,7 @@ function rowHTML(b, i) {
   const st = STATUS[b.status], p = profitOf(b), settled = isSettled(b);
   const flash = ui.flashId === b.id ? ' flash' : '';
   let res;
-  if (!settled) res = `<span class="zero" style="font-weight:600">En juego</span><small>Potencial ${money(b.stake * (b.odds - 1), { sign: true })}</small>`;
+  if (!settled) res = `<span class="zero" style="font-weight:600">En juego</span><small>Potencial ${money(potentialProfit(b), { sign: true })}</small>`;
   else if (b.status === 'Nula') res = `<span class="zero">${money(0)}</span><small>Reembolso</small>`;
   else res = `<span class="${sgn(p)}">${p !== 0 ? icon(triFor(p), 'fill') + ' ' : ''}${money(p, { sign: true })}</span>`;
   const reinv = b.reinvest ? `<span class="tag reinv" title="Pagada con ganancias">${icon('repeat')}Ganancias</span>` : '';
@@ -1691,8 +1720,8 @@ function rowHTML(b, i) {
         <div class="r-event">${esc(b.event)}</div>
         <div class="r-meta-d"><span>${fmtShort(b.date)}</span><span>${esc(catLabel(b.category))}</span><span>${esc(b.type)}</span>${reinv}</div>
       </div>
-      <div class="r-meta"><span>${fmtShort(b.date)}</span><span class="m-nums">${b.odds.toFixed(2)} · ${money(b.stake)}</span>${b.type !== 'Simple' ? `<span>${esc(b.type)}</span>` : ''}${reinv}</div>
-      <div class="c-odds">${b.odds.toFixed(2)}</div>
+      <div class="r-meta"><span>${fmtShort(b.date)}</span><span class="m-nums">${fmtOdds(b.odds)} · ${money(b.stake)}</span>${b.type !== 'Simple' ? `<span>${esc(b.type)}</span>` : ''}${reinv}</div>
+      <div class="c-odds">${fmtOdds(b.odds)}</div>
       <div class="c-stake">${money(b.stake)}</div>
       <div class="c-pill"><span class="pill ${st.cls}">${icon(st.icon)}${b.status}</span></div>
       <div class="c-res">${res}</div>
@@ -1712,12 +1741,26 @@ function buildFormChoices() {
 function setCat(c) { formCat = c; $$('#f-cat .chip').forEach(b => b.setAttribute('aria-checked', String(b.dataset.cat === c))); }
 function setStatus(s) {
   formStatus = s; $$('#f-status .chip').forEach(b => b.setAttribute('aria-checked', String(b.dataset.st === s)));
-  $('#cashField').hidden = s !== 'Cashout'; updatePreview();
+  $('#cashField').hidden = s !== 'Cashout'; $('#payoutField').hidden = !payoutApplies(); updatePreview();
 }
 function setReinv(on) {
   formReinv = on;
   $('#reinvToggle').setAttribute('aria-checked', String(on)); $('#reinv').classList.toggle('on', on); $('#reinvBody').hidden = !on;
   updateQuick(); updatePreview();
+}
+/* Pago exacto de la casa: devuelve el pago TOTAL en pesos, o null si el campo está vacío */
+const payoutApplies = () => formStatus === 'Pendiente' || formStatus === 'Ganada';
+function exactPayout(stake) {
+  const raw = $('#f-payout').value.trim(); if (!raw || !payoutApplies()) return null;
+  const v = parseMoney(raw); if (!isFinite(v) || v <= 0) return null;
+  return round2(segPay.value === 'profit' ? stake + v : v);
+}
+function payoutProblem(stake) {
+  const raw = $('#f-payout').value.trim(); if (!raw || !payoutApplies()) return '';
+  const v = parseMoney(raw); if (!isFinite(v) || v <= 0) return 'Escribe un monto válido.';
+  if (!(stake > 0)) return '';
+  if (segPay.value === 'total' && v <= stake) return 'El pago total debe ser mayor a lo que apostaste. ¿Es solo la ganancia?';
+  return '';
 }
 function formVals() {
   return { odds: parseOdds($('#f-odds').value), stake: parseMoney($('#f-stake').value), cash: parseMoney($('#f-cash').value) };
@@ -1733,7 +1776,8 @@ function updateQuick() {
 function updatePreview() {
   const { odds, stake, cash } = formVals();
   const o = isFinite(odds) && odds > 1 ? odds : 1, s = isFinite(stake) && stake > 0 ? stake : 0, c = isFinite(cash) && cash >= 0 ? cash : 0;
-  let k1 = 'Pago total potencial', v1 = s * o, k2 = 'Ganancia neta potencial', v2 = s * (o - 1);
+  const calcPay = round2(s * o), exact = (s > 0 && !payoutProblem(s)) ? exactPayout(s) : null, pay = exact ?? calcPay;
+  let k1 = 'Pago total potencial', v1 = pay, k2 = 'Ganancia neta potencial', v2 = round2(pay - s);
   if (formStatus === 'Ganada') { k1 = 'Pago total'; k2 = 'Ganancia neta'; }
   else if (formStatus === 'Perdida') { k1 = 'Pago total'; v1 = 0; k2 = 'Pérdida neta'; v2 = -s; }
   else if (formStatus === 'Nula') { k1 = 'Reembolso'; v1 = s; k2 = 'Ganancia neta'; v2 = 0; }
@@ -1751,6 +1795,14 @@ function updatePreview() {
   fieldError('odds', $('#f-odds').value.trim() && !(isFinite(odds) && odds > 1) ? 'La cuota debe ser mayor a 1.00 (ej. 1.85).' : '');
   fieldError('stake', $('#f-stake').value.trim() && !(isFinite(stake) && stake > 0) ? 'Escribe un monto mayor a $0.' : '');
   fieldError('cash', formStatus === 'Cashout' && $('#f-cash').value.trim() && !(isFinite(cash) && cash >= 0) ? 'Escribe un monto válido.' : '');
+  fieldError('payout', payoutProblem(s));
+  const dRow = $('#pvDiff');
+  if (exact != null) {
+    const diff = round2(exact - calcPay), big = Math.abs(diff) > Math.max(1, calcPay * 0.05);
+    dRow.hidden = false; dRow.classList.toggle('warnrow', big);
+    $('#pvDiffV').textContent = money(diff, { sign: true });
+    $('#pvDiffK').textContent = big ? 'Difiere mucho del cálculo. ¿Es pago total o solo ganancia?' : 'Tu casa vs. cálculo con la cuota';
+  } else dRow.hidden = true;
 }
 function fieldError(name, msg) {
   const e = $('#e-' + name), w = $('#w-' + name); if (!e) return;
@@ -1766,18 +1818,23 @@ function openBet(id = null, preset = {}) {
   $('#f-event').value = b ? b.event : '';
   setCat(b ? b.category : state.lastCategory);
   segType.set(b ? b.type : 'Simple', false);
-  $('#f-odds').value = b ? b.odds.toFixed(2) : '';
+  $('#f-odds').value = b ? fmtOdds(b.odds) : '';
   $('#f-stake').value = b ? String(b.stake) : '';
   $('#f-cash').value = b && b.status === 'Cashout' ? String(b.cashout) : '';
   $('#f-date').value = b ? b.date : todayStr();
-  ['event', 'odds', 'stake', 'cash'].forEach(n => fieldError(n, ''));
+  $('#f-payout').value = b && b.payout > 0 ? String(b.payout) : ''; segPay.set('total', false);
+  ['event', 'odds', 'stake', 'cash', 'payout'].forEach(n => fieldError(n, ''));
   updateQuick();
   setReinv(b ? !!b.reinvest : !!preset.reinvest);
   setStatus(b ? b.status : 'Pendiente');
   if (preset.stake) $('#f-stake').value = String(preset.stake);
   updatePreview();
   S.bet.open();
-  requestAnimationFrame(() => { segType.place(false); $('.sheet-body', S.bet.el).scrollTop = 0; if (!b && finePointer.matches) $('#f-event').focus({ preventScroll: true }); });
+  requestAnimationFrame(() => {
+    segType.place(false); segPay.place(false); $('.sheet-body', S.bet.el).scrollTop = 0;
+    if (preset.focusPayout) { const f = $('#f-payout'); f.scrollIntoView({ block: 'center' }); f.focus({ preventScroll: true }); }
+    else if (!b && finePointer.matches) $('#f-event').focus({ preventScroll: true });
+  });
 }
 function submitBet(e) {
   e.preventDefault();
@@ -1787,15 +1844,17 @@ function submitBet(e) {
   if (!(isFinite(odds) && odds > 1)) { fieldError('odds', 'La cuota debe ser mayor a 1.00 (ej. 1.85).'); bad = bad || $('#f-odds'); }
   if (!(isFinite(stake) && stake > 0)) { fieldError('stake', 'Escribe un monto mayor a $0.'); bad = bad || $('#f-stake'); }
   if (formStatus === 'Cashout' && !(isFinite(cash) && cash >= 0)) { fieldError('cash', 'Escribe cuánto recuperaste.'); bad = bad || $('#f-cash'); }
+  const pp = payoutProblem(stake); if (pp) { fieldError('payout', pp); bad = bad || $('#f-payout'); }
   if (bad) { bad.focus(); return; }
   const rec = {
     date: $('#f-date').value || todayStr(), event: ev, category: formCat, type: segType.value || 'Simple',
-    odds: round2(odds * 100) / 100 === odds ? odds : Math.round(odds * 100) / 100, stake: round2(stake), status: formStatus,
+    odds: Math.round(odds * 10000) / 10000, stake: round2(stake), status: formStatus,
     cashout: formStatus === 'Cashout' ? round2(cash) : 0, reinvest: formReinv
   };
+  if (payoutApplies()) rec.payout = exactPayout(round2(stake)) ?? 0;   // en otros estados se conserva el que ya tenía
   const isNew = !editId;
   let id = editId;
-  if (isNew) { id = 'b-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); state.bets.push({ id, createdAt: Date.now(), ...rec }); }
+  if (isNew) { id = 'b-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); state.bets.push({ id, createdAt: Date.now(), payout: 0, ...rec }); }
   else { const i = state.bets.findIndex(x => x.id === editId); state.bets[i] = { ...state.bets[i], ...rec }; }
   state.lastCategory = formCat; ui.flashId = id; save();
   S.bet.close(); renderAll();
@@ -1815,6 +1874,13 @@ function resolve(id, status, cashout = 0) {
   const t = $('#toasts').lastElementChild;
   if (t) {
     const sp = t.querySelector('span:not(.t-ico)'); if (sp) sp.textContent = msg;
+    // Ganó con el cálculo de la cuota: ofrece poner el pago exacto de la casa
+    if (status === 'Ganada' && !(nb.payout > 0)) {
+      const ab = document.createElement('button'); ab.type = 'button'; ab.className = 'alt'; ab.textContent = 'Ajustar';
+      ab.title = 'Escribir el pago exacto de tu casa';
+      ab.addEventListener('click', () => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); openBet(id, { focusPayout: true }); });
+      t.insertBefore(ab, t.querySelector('button'));
+    }
     // Victoria: el símbolo de Spicks rueda dentro del aviso
     if (status === 'Ganada' || (status === 'Cashout' && p > 0)) { const ic = t.querySelector('.t-ico'); if (ic) ic.innerHTML = '<img class="roll" src="spicks_simbolo.svg" alt="" width="26" height="26">'; }
   }
@@ -1823,7 +1889,7 @@ function resolve(id, status, cashout = 0) {
 let cashId = null;
 function openCash(id) {
   const b = state.bets.find(x => x.id === id); if (!b) return; cashId = id;
-  $('#cashInfo').innerHTML = `<b>${esc(b.event)}</b><br>Apostaste ${money(b.stake)} a cuota ${b.odds.toFixed(2)}.`;
+  $('#cashInfo').innerHTML = `<b>${esc(b.event)}</b><br>Apostaste ${money(b.stake)} a cuota ${fmtOdds(b.odds)}.`;
   $('#f-qcash').value = ''; $('#e-qcash').hidden = true; $('#w-qcash').setAttribute('aria-invalid', 'false');
   S.cash.open(); if (finePointer.matches) setTimeout(() => $('#f-qcash').focus(), 60);
 }
@@ -1838,9 +1904,9 @@ function download(name, mime, text) {
 }
 function exportCSV() {
   if (!state.bets.length) { toast('No hay apuestas para exportar'); return; }
-  const head = ['Fecha', 'Deporte', 'Tipo', 'Evento', 'Cuota', 'Monto (MXN)', 'Estado', 'Cashout (MXN)', 'Origen del dinero', 'Resultado neto (MXN)'];
+  const head = ['Fecha', 'Deporte', 'Tipo', 'Evento', 'Cuota', 'Monto (MXN)', 'Estado', 'Cashout (MXN)', 'Pago exacto de la casa (MXN)', 'Origen del dinero', 'Resultado neto (MXN)'];
   const q = v => '"' + String(v).replace(/"/g, '""') + '"';
-  const lines = state.bets.slice().sort(byDate).map(b => [b.date, q(b.category), q(b.type), q(b.event), b.odds.toFixed(2), b.stake.toFixed(2), b.status, b.status === 'Cashout' ? b.cashout.toFixed(2) : '', b.reinvest ? 'Ganancias' : 'Dinero propio', profitOf(b).toFixed(2)].join(','));
+  const lines = state.bets.slice().sort(byDate).map(b => [b.date, q(b.category), q(b.type), q(b.event), fmtOdds(b.odds), b.stake.toFixed(2), b.status, b.status === 'Cashout' ? b.cashout.toFixed(2) : '', b.payout > 0 ? b.payout.toFixed(2) : '', b.reinvest ? 'Ganancias' : 'Dinero propio', profitOf(b).toFixed(2)].join(','));
   download(`apuestas-${todayStr()}.csv`, 'text/csv;charset=utf-8', '﻿' + [head.join(','), ...lines].join('\r\n'));
   toast('CSV descargado', { kind: 'ok', ms: 2600 });
 }
@@ -1857,7 +1923,7 @@ function importBackup(file) {
       const bets = d.bets.map((b, i) => {
         const odds = Number(b.odds ?? b.decimalOdds), stake = Number(b.stake);
         if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(b.date) || !(odds > 1) || !(stake > 0) || !STATUS[b.status]) { dropped++; return null; }
-        return { id: String(b.id || 'imp-' + i + '-' + Date.now()), date: b.date, event: String(b.event || 'Sin descripción').slice(0, 140), category: CATS[b.category] ? b.category : 'Otro', type: TYPES.includes(b.type) ? b.type : 'Simple', odds, stake, status: b.status, cashout: Number(b.cashout ?? b.cashoutAmount) || 0, reinvest: !!b.reinvest, createdAt: Number(b.createdAt) || Date.now() + i };
+        return { id: String(b.id || 'imp-' + i + '-' + Date.now()), date: b.date, event: String(b.event || 'Sin descripción').slice(0, 140), category: CATS[b.category] ? b.category : 'Otro', type: TYPES.includes(b.type) ? b.type : 'Simple', odds, stake, status: b.status, cashout: Number(b.cashout ?? b.cashoutAmount) || 0, reinvest: !!b.reinvest, payout: Number(b.payout) > 0 ? Number(b.payout) : 0, createdAt: Number(b.createdAt) || Date.now() + i };
       }).filter(Boolean);
       ask({ title: 'Restaurar respaldo', text: `Se reemplazará tu registro actual por ${bets.length} apuestas del respaldo${dropped ? ` (${dropped} inválidas se omitieron)` : ''}. Podrás deshacerlo desde el aviso.`, ok: 'Restaurar', danger: false })
         .then(yes => { if (yes) withUndo('Respaldo restaurado', () => { state.bets = bets; state.capital = Number(d.capital) || 0; state.demo = false; }); });
@@ -1961,13 +2027,13 @@ function bind() {
   $('#reinvToggle').addEventListener('click', () => setReinv(!formReinv));
   $('#btnUsePool').addEventListener('click', () => { $('#f-stake').value = String(winningsPool(editId)); updatePreview(); });
   $('#quick').addEventListener('click', e => { const b = e.target.closest('[data-amt]'); if (!b) return; $('#f-stake').value = String(b.dataset.amt); updatePreview(); });
-  ['#f-odds', '#f-stake', '#f-cash'].forEach(s => $(s).addEventListener('input', updatePreview));
+  ['#f-odds', '#f-stake', '#f-cash', '#f-payout'].forEach(s => $(s).addEventListener('input', updatePreview));
   $('#w-odds').addEventListener('click', e => {
     const b = e.target.closest('[data-step]'); if (!b) return;
     const cur = parseOdds($('#f-odds').value), step = Number(b.dataset.step), base = isFinite(cur) && cur > 1 ? cur : 1.9 - step;
     $('#f-odds').value = Math.max(1.01, Math.round((base + step) * 100) / 100).toFixed(2); updatePreview();
   });
-  $('#f-odds').addEventListener('blur', () => { const v = parseOdds($('#f-odds').value); if (isFinite(v) && v > 1) $('#f-odds').value = v.toFixed(2); });
+  $('#f-odds').addEventListener('blur', () => { const v = parseOdds($('#f-odds').value); if (isFinite(v) && v > 1) $('#f-odds').value = fmtOdds(v); });
   $('#f-event').addEventListener('input', () => fieldError('event', ''));
 
   // Capital
@@ -1997,6 +2063,7 @@ function init() {
   segRange = initSeg($('#rangeSeg'), v => { state.range = v; ui.limit = PAGE; save(); renderKPIs(); renderChart(true); renderSports(); renderHistory(); });
   segChart = initSeg($('#chartSeg'), v => { state.chartMode = v; save(); $('#chartTitle').textContent = v === 'bankroll' ? 'Evolución del bankroll' : 'Ganancia acumulada'; renderChart(true); });
   segType = initSeg($('#f-type'));
+  segPay = initSeg($('#f-payoutmode'), () => updatePreview()); segPay.set('total', false);
   buildFormChoices(); initChartEvents(); bind();
   applyTheme(state.theme, false);
   renderAll(true);
